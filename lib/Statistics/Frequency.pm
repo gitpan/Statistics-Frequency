@@ -4,7 +4,7 @@ use strict;
 
 use vars qw($VERSION);
 
-$VERSION = 0.02;
+$VERSION = '0.03';
 
 sub elements {
     my $self = shift;
@@ -18,60 +18,85 @@ sub frequency {
 
 sub add_data {
     my $self = shift;
+    my $mod;  
     for my $data (@_) {
 	my $ref = ref $data;
 	if ($ref eq ref $self) {
 	    for my $e ($data->elements) {
 		$self->{data}->{$e} += $data->frequency($e);
+		$mod++;
 	    }
 	} if ($ref eq 'HASH') {
 	    for my $e (keys %{$data}) {
 		$self->{data}->{$e} += $data->{$e};
+		$mod++;
 	    }
 	} elsif ($ref eq 'ARRAY') {
 	    $self->add_data(@$data);
 	} else {
 	    $self->{data}->{$data}++;
+	    $mod++;
 	}
     }
-    delete @{$self}{qw(sum min max)};
+    if ($mod) {
+	delete @{$self}{qw(sum min max)};
+	$self->{update}->($self) if exists $self->{update};
+    }
     return $self;
+}
+
+sub _set_update_callback {
+    my ($self, $callback) = @_;
+    $self->{update} = $callback;
 }
 
 sub remove_data {
     my $self = shift;
+    my $mod;
     for my $data (@_) {
 	my $ref = ref $data;
 	if ($ref && $data->isa(ref $self)) {
 	    for my $e ($data->elements) {
 		$self->{data}->{$e} -= $data->frequency($e);
+		$mod++;
 	    }
 	} if ($ref eq 'HASH') {
 	    for my $e (keys %{$data}) {
 		$self->{data}->{$e} -= $data->{$e};
+		$mod++;
 	    }
 	} elsif ($ref eq 'ARRAY') {
 	    for my $e (@{$data}) {
 		$self->{data}->{$e}--;
+		$mod++;
 	    }
 	} else {
 	    $self->{data}->{$data}--;
+	    $mod++;
 	}
 	for my $e ($self->elements) {
 	    delete $self->{data}->{$e} if $self->{data}->{$e} <= 0;
 	}
     }
-    delete @{$self}{qw(sum min max)};
+    if ($mod) {
+	delete @{$self}{qw(sum min max)};
+	$self->{update}->($self) if exists $self->{update};
+    }
     return $self;
 }
 
 sub remove_elements {
     my $self = shift;
+    my $mod;
     for my $e (@_) {
 	delete $self->{data}->{$e};
+	$mod++;
     }
-    delete $self->{data} unless keys %{$self->{data}};
-    delete @{$self}{qw(sum min max)};
+    if ($mod) {
+	delete $self->{data} unless keys %{$self->{data}};
+	delete @{$self}{qw(sum min max)};
+	$self->{update}->($self) if exists $self->{update};
+    }
     return $self;
 }
 
@@ -79,6 +104,7 @@ sub clear_data {
     my $self = shift;
     delete $self->{data};
     delete @{$self}{qw(sum min max)};
+    $self->{update}->($self) if exists $self->{update};
     return $self;
 }
 

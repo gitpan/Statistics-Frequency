@@ -11,3 +11,4 @@ t/04_remdata.t
 t/05_remelem.t
 t/06_clear.t
 t/07_copy.t
+t/08_update.t
