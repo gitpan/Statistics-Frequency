@@ -4,7 +4,7 @@ use strict;
 
 use vars qw($VERSION);
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 sub elements {
     my $self = shift;
@@ -168,6 +168,7 @@ Statistics::Frequency - simple counting of elements
     $f1->add_data( \@data );
     $f1->add_data( \%data );
 
+    my @list_of_different_elements   = $f1->elements;
     my $number_of_different_elements = $f1->elements;
 
     my $freq = $f1->frequency('x');
@@ -250,6 +251,12 @@ Return the frequency of an element.
     $freq->add_data(\%data);
 
 =over 4
+
+=item *
+
+If an element of the argument list is another frequency object, the
+frequencies in the invocant object of the elements are increased by
+the frequencies in the argument object.
 
 =item *
 
